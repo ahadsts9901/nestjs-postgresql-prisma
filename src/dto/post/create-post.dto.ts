@@ -8,6 +8,14 @@ export class CreatePostDto {
 
     @IsString()
     @IsNotEmpty()
-    text: string
+    description: string
+
+    @IsString()
+    @IsNotEmpty()
+    createdAt: Date
+
+    @IsString()
+    @IsNotEmpty()
+    authorId: number
 
 }

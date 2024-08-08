@@ -1,34 +1,59 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CreatePostDto } from 'src/dto/create-post.dto';
-import { UpdatePostDto } from 'src/dto/update-post.dto';
+import { CreatePostDto } from 'src/dto/post/create-post.dto';
+import { UpdatePostDto } from 'src/dto/post/update-post.dto';
 import { prisma } from "../../prisma/index"
+import { RequestWithUser } from 'src/middlware';
 
 @Injectable()
 export class PostsService {
 
     async findAll() {
-        // const resp = await prisma.post.find().sort({ _id: -1 }).exec()
-        // return {
-        //     message: "posts fetched",
-        //     data: resp
-        // }
-    }
 
-    async create(createPostDto: CreatePostDto) {
+        try {
 
-        const { title, text } = createPostDto
+            const resp = await prisma.post.findMany({
+                orderBy: { id: "desc" },
+                include: { author: true }
+            })
 
-        if (!title || !text || title.trim() === "" || text.trim() === "") {
-            throw new BadRequestException('title or text missing')
+            return {
+                message: "posts fetched",
+                data: resp
+            }
+
+        } catch (error) {
+            console.error(error)
+            throw new Error('internal server error')
         }
 
-        // const res = await postModel.create({
-        //     title: title,
-        //     text: text
-        // })
+    }
 
-        return {
-            message: "post created"
+    async create(createPostDto: CreatePostDto, req: RequestWithUser) {
+
+        try {
+
+            const { title, description } = createPostDto
+            const { id } = req?.currentUser
+
+            if (!title || !description || title.trim() === "" || description.trim() === "") {
+                throw new BadRequestException('title or description missing')
+            }
+
+            const res = await prisma.post.create({
+                data: {
+                    title: title,
+                    description: description,
+                    author: id
+                }
+            })
+
+            return {
+                message: "post created"
+            }
+
+        } catch (error) {
+            console.error(error)
+            throw new Error('internal server error')
         }
 
     }
@@ -39,15 +64,13 @@ export class PostsService {
             throw new BadRequestException('postId not provided')
         }
 
-        // if (!isValidObjectId(postId)) {
-        //     throw new BadRequestException('invalid postId')
-        // }
+        const resp = await prisma.post.findUnique({ where: { id: +postId } })
 
-        // const resp = await postModel.findByIdAndDelete(postId)
+        if (!resp) {
+            throw new NotFoundException('post not found')
+        }
 
-        // if (!resp) {
-        //     throw new NotFoundException('post not found')
-        // }
+        const delResp = await prisma.post.delete({ where: { id: +postId } })
 
         return {
             message: "post deleted"
@@ -58,33 +81,30 @@ export class PostsService {
 
     async updateOne(postId: string, updatePostDto: UpdatePostDto) {
 
-        const { title, text } = updatePostDto
+        const { title, description } = updatePostDto
 
-        if (!title || !text || title.trim() === "" || text.trim() === "") {
-            throw new BadRequestException('title or text missing')
+        if (!title || !description || title.trim() === "" || description.trim() === "") {
+            throw new BadRequestException('title or description missing')
         }
 
         if (!postId || postId.trim() === "") {
             throw new BadRequestException('postId not provided')
         }
 
-        // if (!isValidObjectId(postId)) {
-        //     throw new BadRequestException('invalid postId')
-        // }
+        const resp = await prisma.post.findUnique({ where: { id: +postId } })
 
-        // const resp = await postModel.findByIdAndUpdate({
-        //     _id: postId
-        // },
-        //     {
-        //         $set: {
-        //             title: title,
-        //             text: text
-        //         }
-        //     }, { new: true, runValidators: true })
+        if (!resp) {
+            throw new NotFoundException('post not found')
+        }
 
-        // if (!resp) {
-        //     throw new NotFoundException('post not found')
-        // }
+        const updateResp = await prisma.post.update(
+            {
+                where: { id: +postId },
+                data: {
+                    title: title,
+                    description: description
+                }
+            })
 
         return {
             message: "post updated"
