@@ -33,6 +33,7 @@ export class PostsService {
         try {
 
             const { title, description } = createPostDto
+
             const { id } = req?.currentUser
 
             if (!title || !description || title.trim() === "" || description.trim() === "") {
@@ -43,7 +44,7 @@ export class PostsService {
                 data: {
                     title: title,
                     description: description,
-                    author: id
+                    authorId: id
                 }
             })
 

@@ -4,7 +4,7 @@ import { LoginUserDto } from 'src/dto/user/login-user.dto';
 import * as bcrypt from "bcrypt"
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
-import { prisma } from 'prisma';
+import { prisma } from '../../prisma/index';
 
 @Injectable()
 export class AuthService {
